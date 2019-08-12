@@ -25,6 +25,8 @@ public:
 	void deletePeer(void); 
 	void sendData(void *buf, int len);
 	bool manageSlave(void);
+	void setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int));
+	void setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t));
 	static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 	static void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 };
@@ -39,8 +41,6 @@ public:
 	void ScanForSlave(void);
 	void setDeviceName(char* name) { sprintf(device_name, name); };
 	void InitESPNow(void);
-	void setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int));
-	void setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t));
 
 private:
 	Preferences preferences; 
@@ -55,5 +55,6 @@ public:
 	~EspNowSlave();
 	void setDeviceName(char* name) { sprintf(device_name, name); };
 	void InitESPNow(void);
+
 };
 #endif

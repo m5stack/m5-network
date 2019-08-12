@@ -105,6 +105,14 @@ void EspNow::deletePeer(void) {
   }
 }
 
+void EspNow::setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int)){
+  esp_now_register_recv_cb(cb);
+}
+
+void EspNow::setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t)){
+  esp_now_register_send_cb(cb);
+}
+
 void EspNow::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -214,14 +222,6 @@ void EspNowMaster::InitESPNow(void) {
     esp_now_register_send_cb(OnDataSent);
     // esp_now_register_recv_cb(OnDataRecv);
   ScanForSlave();
-}
-
-void EspNowMaster::setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int)){
-  esp_now_register_recv_cb(cb);
-}
-
-void EspNowMaster::setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t)){
-  esp_now_register_send_cb(cb);
 }
 
 EspNowSlave::EspNowSlave() {
