@@ -13,7 +13,7 @@
 #define DELETEBEFOREPAIR 0
 
 typedef void (*recvCB)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
-typedef void (*sendCB)(const uint8_t *mac_addr, esp_now_send_status_t status);
+typedef void (*sendCB)(const uint8_t *, esp_now_send_status_t);
 
 class EspNow {
 public:
@@ -22,8 +22,6 @@ public:
 	EspNow();
 	~EspNow();
 	static void sendData(void *buff, int len);
-	void setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int));
-    void setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t));
 	void deletePeer(void);
 	bool manageSlave(void);
 };
@@ -45,6 +43,8 @@ public:
 	static int8_t isPeerExist(esp_now_peer_info_t peer_info);
 	static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 	static void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
+	void setRecvCallBack(void (*cb)(const uint8_t *, const uint8_t *, int)) {recvCallBack = cb;};
+	void setSendCallBack(void (*cb)(const uint8_t *, esp_now_send_status_t)) {sendCallBack = cb;};
 	void InitBroadcastSlave(void);
 	bool confirmPeer(esp_now_peer_info_t peer);
 	void Broadcast();
@@ -70,7 +70,7 @@ public:
 	static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 	static void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 	void setRecvCallBack(void (*cb)(const uint8_t *, const uint8_t *, int)) {recvCallBack = cb;};
-	void setSendCallBack(void (*cb)(const uint8_t *, esp_now_send_status_t));
+	void setSendCallBack(sendCB cb) {sendCallBack = cb;};
 
 private:
 	Preferences preferences;

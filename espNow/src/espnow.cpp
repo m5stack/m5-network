@@ -118,24 +118,14 @@ void EspNow::deletePeer() {
 	}
 }
 
-void EspNow::setRecvCallBack(void (*cb)(const unsigned char *, const unsigned char *, int)) {
-	esp_now_register_recv_cb(cb);
-}
-
-void EspNow::setSendCallBack(void (*cb)(const unsigned char *, esp_now_send_status_t)){
-  esp_now_register_send_cb(cb);
-}
-
 EspNowMaster::EspNowMaster() {
-	
+	memset(peerlist.list, 0, sizeof(peerlist.list));
 }
 
 EspNowMaster::~EspNowMaster() {
 
 }
 
-recvCB EspNowMaster::recvCallBack;
-sendCB EspNowMaster::sendCallBack;
 
 peerList EspNowMaster::peerlist;
 
@@ -182,6 +172,8 @@ void EspNowMaster::Init(void) {
     esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);
 	//ScanForSlave(); 
+
+	InitBroadcastSlave();
 } 
 
 int8_t EspNowMaster::isPeerExist(esp_now_peer_info_t peer){
@@ -217,7 +209,9 @@ void EspNowMaster::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t sta
   Serial.print("Last Packet Sent to: "); Serial.println(macStr);
   Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 
-  sendCallBack(mac_addr, status);
+  if(sendCallBack != NULL) {
+	sendCallBack(mac_addr, status);
+  }
 }
 
 void EspNowMaster::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
@@ -238,8 +232,13 @@ void EspNowMaster::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int 
 		isPeerExist(peer);
   	}
 	
-	recvCallBack(mac_addr, data, data_len);
+	if (recvCallBack != NULL) {
+		recvCallBack(mac_addr, data, data_len);
+	}
 }
+
+recvCB EspNowMaster::recvCallBack;
+sendCB EspNowMaster::sendCallBack;
 
 EspNowSlave::EspNowSlave() {
 	memset(peerlist.list, 0, sizeof(peerlist.list));
@@ -314,7 +313,9 @@ void EspNowSlave::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t stat
   Serial.print("Last Packet Sent to: "); Serial.println(macStr);
   Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 
-  sendCallBack(mac_addr, status);
+  if (sendCallBack != NULL){
+	  sendCallBack(mac_addr, status);
+  }
 }
 
 // void EspNowSlave::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
@@ -387,7 +388,9 @@ void EspNowSlave::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int d
   	isPeerExist(peer);
   }
 
-  recvCallBack(mac_addr, data, data_len);
+  if (recvCallBack != NULL) {
+	recvCallBack(mac_addr, data, data_len);
+  }
   //sscanf(mac_addr.c_str(), "%x:%x:%x:%x:%x:%x%c", )
 //   String addr = (char *)macStr;
 //   preferences.putString("mac_addr", addr);
