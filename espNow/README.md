@@ -2,7 +2,7 @@
 This library for somebody want to use EspNow in a easy way.
 
 ## Get Started
-### master side
+### master side Init
 ```
 #include <espnow.h>
 EspNowMaster espnow;
@@ -20,11 +20,11 @@ void loop() {
 you need to wait for the slave Ack.
 if the slave send ack back to the master, you will have to use this.
 
-- ```espnow.peerlist```, a list with the type of ```esp_now_peer_info_t```, all slave's addr will update here.
-- ```espnow.confirmPeer(esp_now_peer_info_t peer)```. confirm the slave you want from the list. then you can send data to it.
-- ```espnow.sendData```.use it after you confirm a slave. 
+- ```espnow.peerlist```: all slave mac_addr will be save here when the slave device send back their ack.
+- ```espnow.confirmPeer(esp_now_peer_info_t peer)```: choice a mac_addr in the list and confirm it.
+- ```espnow.sendData```.then you can send data to the device that you confirm. 
 
-### slave side
+### slave side Init
 ```
 #include <espnow.h>
 EspNowSlave espnow;
@@ -41,8 +41,8 @@ void loop() {
 #### after this
 you need to check the broadcast list, and know who is broadcasting right now, select the master you want and send him an Ack.
 
-- ```espnow.peerlist```, a list with the master who is broadcasting.
-- ```espnow.Ack(esp_now_peer_info_t peer)```,select one from the list, and use this function to send him ack.
-- ```espnow.sendData```, use it to send Data to the master you want.
+- ```espnow.peerlist```, all master mac_addr will be save here when there is master is broadcasting.
+- ```espnow.Ack(esp_now_peer_info_t peer)```: choice one in the ```peerlist```, and send back the Ack to this master.
+- ```espnow.sendData```: then you can send data to the master you choice.
 
  
