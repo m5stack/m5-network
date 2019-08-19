@@ -1,8 +1,8 @@
-#ESPNOW Libarary
+# ESPNOW Libarary
 This library for somebody want to use EspNow in a easy way.
 
-##Get Started
-###master side
+## Get Started
+### master side
 ```
 #include <espnow.h>
 EspNowMaster espnow;
@@ -16,7 +16,7 @@ void loop() {
 }
 ```
 
-####after this 
+#### after this 
 you need to wait for the slave Ack.
 if the slave send ack back to the master, you will have to use this.
 
@@ -24,7 +24,7 @@ if the slave send ack back to the master, you will have to use this.
 - ```espnow.confirmPeer(esp_now_peer_info_t peer)```. confirm the slave you want from the list. then you can send data to it.
 - ```espnow.sendData```.use it after you confirm a slave. 
 
-###slave side
+### slave side
 ```
 #include <espnow.h>
 EspNowSlave espnow;
@@ -38,7 +38,7 @@ void loop() {
 }
 ```
 
-####after this
+#### after this
 you need to check the broadcast list, and know who is broadcasting right now, select the master you want and send him an Ack.
 
 - ```espnow.peerlist```, a list with the master who is broadcasting.
