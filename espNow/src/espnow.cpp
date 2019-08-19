@@ -15,6 +15,7 @@ void EspNow::sendData(void *buf, int len) {
   const uint8_t *peer_addr = slave.peer_addr;
   //Serial.print("Sending: "); Serial.println(data);
   esp_err_t result = esp_now_send(peer_addr, (uint8_t *)buf, len);
+  /*
   Serial.print("Send Status: ");
   if (result == ESP_OK) {
     Serial.println("Success");
@@ -31,7 +32,7 @@ void EspNow::sendData(void *buf, int len) {
     Serial.println("Peer not found.");
   } else {
     Serial.println("Not sure what happened");
-  }
+  }*/
 }
 
 // Check if the slave is already paired with the master.
@@ -198,6 +199,8 @@ bool EspNowMaster::confirmPeer(esp_now_peer_info_t peer){
 		slave.peer_addr[i] = peer.peer_addr[i];
 	}
 	isConnected = true;
+	slave.channel = CHANNEL; // pick a channel
+  	slave.encrypt = 0;
 	manageSlave();
 	return true;
 }
@@ -206,8 +209,8 @@ void EspNowMaster::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t sta
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Sent to: "); Serial.println(macStr);
-  Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+//   Serial.print("Last Packet Sent to: "); Serial.println(macStr);
+//   Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 
   if(sendCallBack != NULL) {
 	sendCallBack(mac_addr, status);
@@ -219,8 +222,8 @@ void EspNowMaster::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int 
   	snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   	//Serial.print("Last Packet Recv from: "); Serial.println(macStr);
-  	Serial.print("Last Packet Recv Data: "); Serial.println(*data);
-  	Serial.println("");
+  	// Serial.print("Last Packet Recv Data: "); Serial.println(*data);
+  	// Serial.println("");
 
 	if (data_len == 2 && data[0] == 0xaa && data[1] == 0x77) {
 		Serial.printf("recv slave confirm"); Serial.println(macStr);
@@ -310,8 +313,8 @@ void EspNowSlave::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t stat
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Sent to: "); Serial.println(macStr);
-  Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+//   Serial.print("Last Packet Sent to: "); Serial.println(macStr);
+//   Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 
   if (sendCallBack != NULL){
 	  sendCallBack(mac_addr, status);
@@ -342,12 +345,16 @@ void EspNowSlave::Ack(esp_now_peer_info_t peer){
 	slave.channel = SLAVE_CHANNEL;
 	slave.encrypt = 0;
 	slave.ifidx = ESP_IF_WIFI_AP;
+	isPeerExist(slave);
+	// Serial.println("add peer");
 	uint8_t ackdata[] = {0xaa, 0x77};
 	Serial.print("macaddress");
 	for (int i =  0; i < 6; i++) {
 		Serial.printf("%x:", slave.peer_addr[i]);
 	}
+	// Serial.println("add peer");
 	Serial.println();
+	isConnected = true;
     sendData(ackdata, 2);
 }
 
@@ -372,9 +379,9 @@ void EspNowSlave::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int d
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Recv from: "); Serial.println(macStr);
-  Serial.print("Last Packet Recv Data: "); Serial.println(*data);
-  Serial.println("");
+//   Serial.print("Last Packet Recv from: "); Serial.println(macStr);
+//   Serial.print("Last Packet Recv Data: "); Serial.println(*data);
+//   Serial.println("");
 
   if (data_len == 2 && data[0] == 0xaa && data[1] == 0x66) {
     Serial.println("recv aa 66");

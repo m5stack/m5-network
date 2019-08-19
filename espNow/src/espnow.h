@@ -56,6 +56,7 @@ private:
 
 class EspNowSlave : public EspNow {
 public:
+	bool isConnected = false;
 	static peerList peerlist;
 	// static void (*recvCallBack)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 	static recvCB recvCallBack;
