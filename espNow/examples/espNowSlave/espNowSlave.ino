@@ -51,6 +51,7 @@ void printPeerList() {
 }
 
 int lastCount = 0;
+int choice = 0;
 void loop() {
   M5.update();
   
@@ -65,7 +66,30 @@ void loop() {
   char *str = "ack";
   
   if(M5.BtnB.isPressed()) {
-    espnow.Ack(espnow.peerlist.list[0]);
+    espnow.Ack(espnow.peerlist.list[choice]);
+    setLcd();
   }
+
+  //Serial.printf("peer count: %d\r\n", espnow.peerlist.count);
+  if (!espnow.isConnected){
+      if(M5.BtnA.wasPressed()) {
+		  choice--;
+		  if (choice < 0) {
+			  choice = 0;
+		  }
+		  //setLcd();
+		  printPeerList();
+		  M5.Lcd.fillCircle(220, choice*15 + 80, 3, RED);
+	  } else if(M5.BtnC.wasPressed()) {
+		  choice++;
+		  if (choice > espnow.peerlist.count - 1) {
+			  choice = espnow.peerlist.count - 1;
+		  }
+		  //setLcd();
+		  printPeerList();
+		  M5.Lcd.fillCircle(220, choice*15 + 80, 3, RED);
+    }
+  }
+
   delay(10);
 }

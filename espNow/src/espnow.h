@@ -43,8 +43,8 @@ public:
 	static int8_t isPeerExist(esp_now_peer_info_t peer_info);
 	static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 	static void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
-	void setRecvCallBack(void (*cb)(const uint8_t *, const uint8_t *, int)) {recvCallBack = cb;};
-	void setSendCallBack(void (*cb)(const uint8_t *, esp_now_send_status_t)) {sendCallBack = cb;};
+	void setRecvCallBack(recvCB cb) {recvCallBack = cb;};
+	void setSendCallBack(sendCB cb) {sendCallBack = cb;};
 	void InitBroadcastSlave(void);
 	bool confirmPeer(esp_now_peer_info_t peer);
 	void Broadcast();
@@ -70,7 +70,7 @@ public:
 	static int8_t isPeerExist(esp_now_peer_info_t peer);
 	static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 	static void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
-	void setRecvCallBack(void (*cb)(const uint8_t *, const uint8_t *, int)) {recvCallBack = cb;};
+	void setRecvCallBack(recvCB cb) {recvCallBack = cb;};
 	void setSendCallBack(sendCB cb) {sendCallBack = cb;};
 
 private:
