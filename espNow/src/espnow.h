@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include <WiFi.h>
 #include <String>
+#include <M5Stack.h>
 
 
 #define SLAVE_CHANNEL 1
@@ -14,6 +15,8 @@
 
 typedef void (*recvCB)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 typedef void (*sendCB)(const uint8_t *, esp_now_send_status_t);
+
+uint8_t bcc(void *buf, int len);
 
 class EspNow {
 public:
@@ -46,7 +49,7 @@ public:
 	void setRecvCallBack(recvCB cb) {recvCallBack = cb;};
 	void setSendCallBack(sendCB cb) {sendCallBack = cb;};
 	void InitBroadcastSlave(void);
-	bool confirmPeer(esp_now_peer_info_t peer);
+	bool confirm(esp_now_peer_info_t peer);
 	void Broadcast();
 	void Init();
 
@@ -64,7 +67,7 @@ public:
 
 	EspNowSlave();
 	~EspNowSlave();
-	void Ack(esp_now_peer_info_t peer);
+	bool Ack(esp_now_peer_info_t peer);
 	void Init();
 	void configDeviceAP();
 	static int8_t isPeerExist(esp_now_peer_info_t peer);
