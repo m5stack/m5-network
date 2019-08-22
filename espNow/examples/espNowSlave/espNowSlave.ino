@@ -5,8 +5,8 @@ EspNowSlave espnow;
 
 void setLcd() {
   M5.Lcd.setCursor(0, 0);
-  M5.Lcd.clear(WHITE);
-  M5.Lcd.setTextColor(RED);
+  M5.Lcd.clear(BLACK);
+  M5.Lcd.setTextColor(GREEN);
   M5.Lcd.setBrightness(200);
   M5.Lcd.setTextSize(2);
   M5.Lcd.println("espnow slave test");
@@ -47,10 +47,18 @@ void printPeerList() {
            espnow.peerlist.list[i].peer_addr[5]);
     M5.Lcd.println(macStr);
     M5.Lcd.println();
+    
   }
+  M5.Lcd.setCursor(50, 200);
+  M5.Lcd.print("Up");
+  M5.Lcd.setCursor(120, 200);
+  M5.Lcd.print("select");
+  M5.Lcd.setCursor(230, 200);
+  M5.Lcd.print("down");
 }
 
 int lastCount = 0;
+int choice = 0;
 void loop() {
   M5.update();
   
@@ -65,7 +73,35 @@ void loop() {
   char *str = "ack";
   
   if(M5.BtnB.isPressed()) {
-    espnow.Ack(espnow.peerlist.list[0]);
+    if(!espnow.Ack(espnow.peerlist.list[choice])){
+      Serial.println("set addr error");
+    }
+    setLcd();
+    if(espnow.isConnected){
+      // M5.Lcd.println("connected");
+    }
   }
+
+  if (!espnow.isConnected){
+    if(M5.BtnA.wasPressed()) {
+		  choice--;
+		  if (choice < 0) {
+			  choice = 0;
+		  }
+		  printPeerList();
+		  M5.Lcd.fillCircle(220, choice*15 + 80, 3, RED);
+	  } else if(M5.BtnC.wasPressed()) {
+		  choice++;
+		  if (choice > espnow.peerlist.count - 1) {
+			  choice = espnow.peerlist.count - 1;
+		  }
+      if (espnow.peerlist.count == 0) {
+        choice = 0;
+      }
+		  printPeerList();
+		  M5.Lcd.fillCircle(220, choice*15 + 80, 3, RED);
+    }
+  }
+
   delay(10);
 }

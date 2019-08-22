@@ -5,8 +5,8 @@ EspNowMaster espnow;
 
 void setLcd() {
   M5.Lcd.setCursor(0, 0);
-  M5.Lcd.clear(WHITE);
-  M5.Lcd.setTextColor(RED);
+  M5.Lcd.clear(BLACK);
+  M5.Lcd.setTextColor(GREEN);
   M5.Lcd.setBrightness(200);
   M5.Lcd.setTextSize(2);
   M5.Lcd.println("espnow slave test");
@@ -34,6 +34,12 @@ void printPeerList() {
            espnow.peerlist.list[i].peer_addr[5]);
     M5.Lcd.println(macStr);
   }
+  M5.Lcd.setCursor(50, 200);
+  M5.Lcd.print("Up");
+  M5.Lcd.setCursor(120, 200);
+  M5.Lcd.print("select");
+  M5.Lcd.setCursor(230, 200);
+  M5.Lcd.print("down");
 }
 
 int choice = 0;
@@ -47,7 +53,9 @@ void loop() {
   Serial.printf("peer count: %d\r\n", espnow.peerlist.count);
   if(M5.BtnB.wasPressed()) {
     Serial.println("confirm");
-    espnow.confirmPeer(espnow.peerlist.list[choice]);
+    if(!espnow.confirm(espnow.peerlist.list[choice])){
+      Serial.println("set add error");
+    }
     
     if (espnow.isConnected) {
       char *str = "hi";

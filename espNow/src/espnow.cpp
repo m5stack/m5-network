@@ -1,7 +1,16 @@
 #include "espnow.h"
 
+uint8_t getBcc(void *buf, int len){
+  uint8_t bccres = 0;
+  for (int i = 0; i < len; i++){
+    bccres ^= *((uint8_t *)buf+i);
+  }
+
+  return bccres;
+}
+
 EspNow::EspNow() {
-	memset(&slave, 0, sizeof(slave));
+    memset(&slave, 0, sizeof(slave));
 }
 
 EspNow::~EspNow() {
@@ -14,7 +23,16 @@ esp_now_peer_info_t EspNow::slave;
 void EspNow::sendData(void *buf, int len) {
   const uint8_t *peer_addr = slave.peer_addr;
   //Serial.print("Sending: "); Serial.println(data);
-  esp_err_t result = esp_now_send(peer_addr, (uint8_t *)buf, len);
+  uint8_t *sendbuf = (uint8_t *)malloc(len + 1);
+  uint8_t *psendbuf = sendbuf;
+  // psendbuf = (uint8_t*)buf;
+  memcpy(sendbuf, buf, len);
+  uint8_t bcc = getBcc(buf, len);
+  *(psendbuf + len) = bcc;
+  esp_err_t result = esp_now_send(peer_addr, (uint8_t *)sendbuf, len + 1);
+
+  // esp_err_t bcc_result = esp_now_send(peer_add, &bcc, 1); 
+  /*
   Serial.print("Send Status: ");
   if (result == ESP_OK) {
     Serial.println("Success");
@@ -31,95 +49,95 @@ void EspNow::sendData(void *buf, int len) {
     Serial.println("Peer not found.");
   } else {
     Serial.println("Not sure what happened");
-  }
+  }*/
 }
 
 // Check if the slave is already paired with the master.
 // If not, pair the slave with master
 bool EspNow::manageSlave() {
-	if (slave.channel == CHANNEL) {
-		if (DELETEBEFOREPAIR) {
-			deletePeer();
-		}
+    if (slave.channel == CHANNEL) {
+        if (DELETEBEFOREPAIR) {
+            deletePeer();
+        }
 
-		Serial.print("Slave Status: ");
-		const esp_now_peer_info_t *peer = &slave;
-		const uint8_t *peer_addr = slave.peer_addr;
-		// check if the peer exists
-		bool exists = esp_now_is_peer_exist(peer_addr);
-		if (exists) {
-			// Slave already paired.
-			Serial.println("Already Paired");
-			return true;
-		}
-		else {
-			// Slave not paired, attempt pair
-			esp_err_t addStatus = esp_now_add_peer(peer);
-			if (addStatus == ESP_OK) {
-				// Pair success
-				Serial.println("Pair success");
-				return true;
-			}
-			else if (addStatus == ESP_ERR_ESPNOW_NOT_INIT) {
-				// How did we get so far!!
-				Serial.println("ESPNOW Not Init");
-				return false;
-			}
-			else if (addStatus == ESP_ERR_ESPNOW_ARG) {
-				Serial.println("Invalid Argument");
-				return false;
-			}
-			else if (addStatus == ESP_ERR_ESPNOW_FULL) {
-				Serial.println("Peer list full");
-				return false;
-			}
-			else if (addStatus == ESP_ERR_ESPNOW_NO_MEM) {
-				Serial.println("Out of memory");
-				return false;
-			}
-			else if (addStatus == ESP_ERR_ESPNOW_EXIST) {
-				Serial.println("Peer Exists");
-				return true;
-			}
-			else {
-				Serial.println("Not sure what happened");
-				return false;
-			}
-		}
-	}
-	else {
-		// No slave found to process
-		Serial.println("No Slave found to process");
-		return false;
-	}
+        Serial.print("Slave Status: ");
+        const esp_now_peer_info_t *peer = &slave;
+        const uint8_t *peer_addr = slave.peer_addr;
+        // check if the peer exists
+        bool exists = esp_now_is_peer_exist(peer_addr);
+        if (exists) {
+            // Slave already paired.
+            Serial.println("Already Paired");
+            return true;
+        }
+        else {
+            // Slave not paired, attempt pair
+            esp_err_t addStatus = esp_now_add_peer(peer);
+            if (addStatus == ESP_OK) {
+                // Pair success
+                Serial.println("Pair success");
+                return true;
+            }
+            else if (addStatus == ESP_ERR_ESPNOW_NOT_INIT) {
+                // How did we get so far!!
+                Serial.println("ESPNOW Not Init");
+                return false;
+            }
+            else if (addStatus == ESP_ERR_ESPNOW_ARG) {
+                Serial.println("Invalid Argument");
+                return false;
+            }
+            else if (addStatus == ESP_ERR_ESPNOW_FULL) {
+                Serial.println("Peer list full");
+                return false;
+            }
+            else if (addStatus == ESP_ERR_ESPNOW_NO_MEM) {
+                Serial.println("Out of memory");
+                return false;
+            }
+            else if (addStatus == ESP_ERR_ESPNOW_EXIST) {
+                Serial.println("Peer Exists");
+                return true;
+            }
+            else {
+                Serial.println("Not sure what happened");
+                return false;
+            }
+        }
+    }
+    else {
+        // No slave found to process
+        Serial.println("No Slave found to process");
+        return false;
+    }
 }
 
 void EspNow::deletePeer() {
-	const esp_now_peer_info_t *peer = &slave;
-	const uint8_t *peer_addr = slave.peer_addr;
-	esp_err_t delStatus = esp_now_del_peer(peer_addr);
-	Serial.print("Slave Delete Status: ");
-	if (delStatus == ESP_OK) {
-		// Delete success
-		Serial.println("Success");
-	}
-	else if (delStatus == ESP_ERR_ESPNOW_NOT_INIT) {
-		// How did we get so far!!
-		Serial.println("ESPNOW Not Init");
-	}
-	else if (delStatus == ESP_ERR_ESPNOW_ARG) {
-		Serial.println("Invalid Argument");
-	}
-	else if (delStatus == ESP_ERR_ESPNOW_NOT_FOUND) {
-		Serial.println("Peer not found.");
-	}
-	else {
-		Serial.println("Not sure what happened");
-	}
+    const esp_now_peer_info_t *peer = &slave;
+    const uint8_t *peer_addr = slave.peer_addr;
+    esp_err_t delStatus = esp_now_del_peer(peer_addr);
+    Serial.print("Slave Delete Status: ");
+    if (delStatus == ESP_OK) {
+        // Delete success
+        Serial.println("Success");
+    }
+    else if (delStatus == ESP_ERR_ESPNOW_NOT_INIT) {
+        // How did we get so far!!
+        Serial.println("ESPNOW Not Init");
+    }
+    else if (delStatus == ESP_ERR_ESPNOW_ARG) {
+        Serial.println("Invalid Argument");
+    }
+    else if (delStatus == ESP_ERR_ESPNOW_NOT_FOUND) {
+        Serial.println("Peer not found.");
+    }
+    else {
+        Serial.println("Not sure what happened");
+    }
 }
 
 EspNowMaster::EspNowMaster() {
-	memset(peerlist.list, 0, sizeof(peerlist.list));
+    memset(peerlist.list, 0, sizeof(peerlist.list));
 }
 
 EspNowMaster::~EspNowMaster() {
@@ -142,12 +160,12 @@ void EspNowMaster::InitBroadcastSlave() {
 }
 
 void EspNowMaster::Broadcast(){
-	if (isConnected) {
+    if (isConnected) {
 
-	} else {
-		uint8_t req[] = {0xaa, 0x66};
-		sendData(req, 2);
-	}
+    } else {
+        uint8_t req[] = {0xaa, 0x66};
+        sendData(req, 2);
+    }
 }
 
 
@@ -171,78 +189,100 @@ void EspNowMaster::Init(void) {
 
     esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);
-	//ScanForSlave(); 
+    //ScanForSlave(); 
 
-	InitBroadcastSlave();
+    InitBroadcastSlave();
 } 
 
 int8_t EspNowMaster::isPeerExist(esp_now_peer_info_t peer){
-	char macStr[18];
-	if (esp_now_is_peer_exist(peer.peer_addr)) {
-		Serial.printf("this peer is already exist\r\n");
-		return 1;
-	}	
-	else {
-		for(int i = 0; i < 6; i++) {
-			peerlist.list[peerlist.count].peer_addr[i] = peer.peer_addr[i];
-			// slave.peer_addr[i] = peer.peer_addr[i];
-		}	
-		peerlist.count++;
-		esp_now_add_peer(&peer);
-		return 0;
-	}
+    char macStr[18];
+    if (esp_now_is_peer_exist(peer.peer_addr)) {
+        Serial.printf("this peer is already exist\r\n");
+        return 0;
+    }	
+    else {
+        for(int i = 0; i < 6; i++) {
+          if(peer.peer_addr[i] != 0){
+            break;
+          }
+          else {  
+            if (i == 5){
+              return -1;              
+            }
+          }
+        }	
+
+        peerlist.list[peerlist.count] = peer;
+        peerlist.count++;
+        esp_now_add_peer(&peer);
+        return 1;
+    }
 }
 
-bool EspNowMaster::confirmPeer(esp_now_peer_info_t peer){
-	for(int i = 0; i < 6; i++){
-		slave.peer_addr[i] = peer.peer_addr[i];
-	}
-	isConnected = true;
-	manageSlave();
-	return true;
+bool EspNowMaster::confirm(esp_now_peer_info_t peer){
+  for(int i = 0; i < 6; i++){
+    if(peer.peer_addr[i] != 0) {
+      break;
+    }
+    else {
+      if(i == 5){
+        return false;
+      }
+    }
+  }
+  
+  slave = peer;
+  isConnected = true;
+  slave.channel = CHANNEL; // pick a channel
+  slave.encrypt = 0;
+  manageSlave();
+  return true;
 }
 
 void EspNowMaster::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Sent to: "); Serial.println(macStr);
-  Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 
   if(sendCallBack != NULL) {
-	sendCallBack(mac_addr, status);
+    sendCallBack(mac_addr, status);
   }
 }
 
 void EspNowMaster::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
-  	char macStr[18];
-  	snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  	//Serial.print("Last Packet Recv from: "); Serial.println(macStr);
-  	Serial.print("Last Packet Recv Data: "); Serial.println(*data);
-  	Serial.println("");
+    char macStr[18];
+    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+          mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    //Serial.print("Last Packet Recv from: "); Serial.println(macStr);
+    // Serial.print("Last Packet Recv Data: "); Serial.println(*data);
+    // Serial.println("");
 
-	if (data_len == 2 && data[0] == 0xaa && data[1] == 0x77) {
-		Serial.printf("recv slave confirm"); Serial.println(macStr);
-		esp_now_peer_info_t peer;
-		memset(&peer, 0, sizeof(peer));
-		for(int i = 0; i < 6; i++) {
-			peer.peer_addr[i] = mac_addr[i];
-		}
-		isPeerExist(peer);
-  	}
-	
-	if (recvCallBack != NULL) {
-		recvCallBack(mac_addr, data, data_len);
-	}
+  uint8_t bcc = 0;
+  bcc = getBcc((void *)data, data_len - 1);
+
+  if (bcc == data[data_len - 1]) {
+  if (data_len == 3 && data[0] == 0xaa && data[1] == 0x77) {
+      Serial.printf("recv slave confirm"); Serial.println(macStr);
+      esp_now_peer_info_t peer;
+      memset(&peer, 0, sizeof(peer));
+      for(int i = 0; i < 6; i++) {
+        peer.peer_addr[i] = mac_addr[i];
+      }
+        isPeerExist(peer);
+      }
+      else {
+      if (recvCallBack != NULL) {
+        recvCallBack(mac_addr, data, data_len);
+      }  
+    }
+  }    
 }
 
 recvCB EspNowMaster::recvCallBack;
 sendCB EspNowMaster::sendCallBack;
 
 EspNowSlave::EspNowSlave() {
-	memset(peerlist.list, 0, sizeof(peerlist.list));
-	// memset(&slave, 0, sizeof(slave));
+    memset(peerlist.list, 0, sizeof(peerlist.list));
 }
 
 EspNowSlave::~EspNowSlave() {
@@ -310,97 +350,89 @@ void EspNowSlave::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t stat
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Sent to: "); Serial.println(macStr);
-  Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-
   if (sendCallBack != NULL){
-	  sendCallBack(mac_addr, status);
+      sendCallBack(mac_addr, status);
   }
 }
 
-// void EspNowSlave::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
-//   char macStr[18];
-//   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-//            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-//   //Serial.print("Last Packet Recv from: "); Serial.println(macStr);
-//   Serial.print("Last Packet Recv Data: "); Serial.println(*data);
-//   Serial.println("");
-	
-//   if (data_len == 2 && data[0] == 0xaa && data[1] == 0x66) {
-// 	Serial.printf("recv master req"); Serial.println(macStr);
-// 	esp_now_peer_info_t peer;
-// 	memset(&peer, 0, sizeof(peer));
-// 	for(int i = 0; i < 6; i++) {
-// 		peer.peer_addr[i] = mac_addr[i];
-// 	}
-// 	isPeerExist(peer);
-//   } 
-// }
+bool EspNowSlave::Ack(esp_now_peer_info_t peer){
+  int count = 0;
+  // Serial.print("ack_addr:");
+  for (int i = 0; i < 6; i++) {
+    if (peer.peer_addr[i] != 0) {
+      break;
+    }
+    else {
+      if (i == 5){
+        return false;
+      }
+    }
+    // Serial.printf("%x,", )
+  }
 
-void EspNowSlave::Ack(esp_now_peer_info_t peer){
-	slave = peer;
-	slave.channel = SLAVE_CHANNEL;
-	slave.encrypt = 0;
-	slave.ifidx = ESP_IF_WIFI_AP;
-	uint8_t ackdata[] = {0xaa, 0x77};
-	Serial.print("macaddress");
-	for (int i =  0; i < 6; i++) {
-		Serial.printf("%x:", slave.peer_addr[i]);
-	}
-	Serial.println();
-    sendData(ackdata, 2);
+  slave = peer;
+  slave.channel = SLAVE_CHANNEL;
+  slave.encrypt = 0;
+  slave.ifidx = ESP_IF_WIFI_AP;
+  isPeerExist(slave);
+  
+  uint8_t ackdata[] = {0xaa, 0x77};
+  isConnected = true;
+  sendData(ackdata, 2);
+  return true;
 }
 
 int8_t EspNowSlave::isPeerExist(esp_now_peer_info_t peer){
-	char macStr[18];
-	if (esp_now_is_peer_exist(peer.peer_addr)) {
-		Serial.printf("this peer is already exist\r\n");
-		return 1;
-	}	
-	else {
-		for(int i = 0; i < 6; i++) {
-			peerlist.list[peerlist.count].peer_addr[i] = peer.peer_addr[i];
-			// slave.peer_addr[i] = peer.peer_addr[i];
-		}	
-		peerlist.count++;
-		esp_now_add_peer(&peer);
-		return 0;
-	}
+    char macStr[18];
+    if (esp_now_is_peer_exist(peer.peer_addr)) {
+        Serial.printf("this peer is already exist\r\n");
+        return 0;
+    }	
+    else {
+        for(int i = 0; i < 6; i++) {
+          if(peer.peer_addr[i] != 0){
+            break;
+          }
+          else {
+            if (i == 5){
+              return -1;
+            }
+          }
+        }	
+
+        peerlist.list[peerlist.count] = peer;
+        peerlist.count++;
+        esp_now_add_peer(&peer);
+        return 1;
+    }
 }
 
 void EspNowSlave::OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Recv from: "); Serial.println(macStr);
-  Serial.print("Last Packet Recv Data: "); Serial.println(*data);
-  Serial.println("");
 
-  if (data_len == 2 && data[0] == 0xaa && data[1] == 0x66) {
-    Serial.println("recv aa 66");
-	esp_now_peer_info_t peer;
-  	for(int i = 0; i < 6; i++) {
-    	peer.peer_addr[i] = mac_addr[i];
-  	}
-  	peer.channel = SLAVE_CHANNEL; // pick a channel
-  	peer.encrypt = 0; // no encryption
-	peer.ifidx = ESP_IF_WIFI_AP;
-  	isPeerExist(peer);
+  uint8_t bcc = 0;
+  bcc = getBcc((void *)data, data_len - 1);
+  if (bcc == data[data_len - 1]) {
+    if (data_len == 3 && data[0] == 0xaa && data[1] == 0x66) {
+      Serial.println("recv aa 66");
+      esp_now_peer_info_t peer;
+      for(int i = 0; i < 6; i++) {
+        peer.peer_addr[i] = mac_addr[i];
+      }
+      peer.channel = SLAVE_CHANNEL; // pick a channel
+      peer.encrypt = 0; // no encryption
+      peer.ifidx = ESP_IF_WIFI_AP;
+      isPeerExist(peer);
+    }
+    else {
+      if (recvCallBack != NULL) {
+        recvCallBack(mac_addr, data, data_len);
+      }
+    }
   }
-
-  if (recvCallBack != NULL) {
-	recvCallBack(mac_addr, data, data_len);
-  }
-  //sscanf(mac_addr.c_str(), "%x:%x:%x:%x:%x:%x%c", )
-//   String addr = (char *)macStr;
-//   preferences.putString("mac_addr", addr);
-//   Serial.print(addr);
-//   delay(1);
-
-//  sendData();
-//  esp_err_t result = esp_now_send(slave.peer_addr, data, sizeof(data));
 }
 
-// typedef void (EspNowSlave::*recvCallBack)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 recvCB EspNowSlave::recvCallBack;
 sendCB EspNowSlave::sendCallBack;
